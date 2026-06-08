@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Melody Music Center — Next.js
 
-## Getting Started
+Website trung tâm dạy nhạc với Next.js 16, Prisma + Neon PostgreSQL, Cloudinary, SSR/SSG, và Admin CMS.
 
-First, run the development server:
+## Kiến trúc rendering
+
+| Module | Route | Rendering |
+|--------|-------|-----------|
+| Trang chủ | `/` | SSG + ISR (1h) |
+| Giới thiệu | `/gioi-thieu` | SSG |
+| Khóa học | `/khoa-hoc`, `/khoa-hoc/[slug]` | SSG + ISR |
+| Giảng viên | `/giang-vien`, `/giang-vien/[slug]` | SSG + ISR |
+| Thư viện | `/thu-vien` | SSG + ISR |
+| Tin tức | `/tin-tuc` | **SSR** (filter category) |
+| Bài viết | `/tin-tuc/[slug]` | SSG + ISR |
+| Liên hệ | `/lien-he` | SSG |
+| Admin | `/admin/*` | **SSR** (dynamic) |
+
+## Cài đặt
+
+### 1. Environment
+
+Tạo file `.env` ở thư mục gốc với các biến:
+
+- `DATABASE_URL` — connection string từ [Neon](https://neon.tech)
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- `JWT_SECRET` — chuỗi bí mật cho session admin
+- `NEXT_PUBLIC_SITE_URL` — URL production (vd: `https://melodymusic.vn`)
+
+### 2. Database
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm db:push      # Tạo tables trên Neon
+pnpm db:seed      # Seed dữ liệu mẫu + admin account
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Chạy dev
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Website: http://localhost:3000
+- Admin: http://localhost:3000/admin/login
+- Default admin: `admin@musik.vn` / `admin123`
 
-## Learn More
+## Admin CMS
 
-To learn more about Next.js, take a look at the following resources:
+| Trang | Chức năng |
+|-------|-----------|
+| `/admin` | Dashboard thống kê |
+| `/admin/posts` | CRUD bài viết + SEO fields |
+| `/admin/courses` | CRUD khóa học |
+| `/admin/teachers` | CRUD giảng viên |
+| `/admin/gallery` | Upload ảnh Cloudinary |
+| `/admin/contacts` | Xem form liên hệ |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Cloudinary
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Ảnh upload qua `/api/admin/upload` → lưu folder `melody-music-center/`.
+Next.js Image tự optimize qua `res.cloudinary.com`.
 
-## Deploy on Vercel
+## SEO
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `sitemap.xml` — tự động từ DB
+- `robots.txt` — allow public, block `/admin/`
+- JSON-LD: MusicSchool, Article, Course
+- Metadata per-page qua `generateMetadata()`
+- Plan triển khai bài viết: [`docs/SEO-CONTENT-PLAN.md`](docs/SEO-CONTENT-PLAN.md)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+pnpm dev          # Development
+pnpm build        # Production build
+pnpm start        # Production server
+pnpm db:generate  # Generate Prisma client
+pnpm db:push      # Push schema to Neon
+pnpm db:seed      # Seed data
+pnpm db:studio    # Prisma Studio GUI
+```
+
+## Deploy (Vercel)
+
+1. Import repo, set root directory = `web`
+2. Add environment variables
+3. Deploy — Vercel tự chạy `prisma generate` + `next build`
+4. Chạy `pnpm db:push && pnpm db:seed` một lần sau deploy

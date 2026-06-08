@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  posts        Post[]
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+model Post {
+  id              String       @id @default(cuid())
+  title           String
+  slug            String       @unique
+  excerpt         String
+  content         String       @db.Text
+  coverImage      String?
+  coverImageId    String?
+  category        PostCategory @default(NEWS)
+  authorName      String
+  authorId        String?
+  author          User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  metaTitle       String?
+  metaDescription String?
+  focusKeyword    String?
+  published       Boolean      @default(false)
+  featured        Boolean      @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([category])
+  @@index([slug])
+}
+
+enum PostCategory {
+  NEWS
+  KNOWLEDGE
+  ACHIEVEMENT
+  EVENT
+  COURSE
+  GUIDE
+  EDUCATION
+}
+
+model Course {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String
+  content      String?  @db.Text
+  price        String
+  duration     String
+  students     String?
+  level        String?
+  features     String[]
+  image        String?
+  imageId      String?
+  icon         String   @default("piano")
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  metaTitle    String?
+  metaDescription String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model Teacher {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  title        String
+  experience   String
+  education    String
+  specialties  String[]
+  achievements String[]
+  image        String?
+  imageId      String?
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model GalleryImage {
+  id        String          @id @default(cuid())
+  url       String
+  publicId  String?
+  caption   String
+  category  GalleryCategory @default(CLASSROOM)
+  sortOrder Int             @default(0)
+  published Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([category, published])
+}
+
+enum GalleryCategory {
+  CLASSROOM
+  PERFORMANCE
+  EXTRACURRICULAR
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  course    String?
+  ageGroup  String?
+  message   String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
